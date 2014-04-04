@@ -388,6 +388,7 @@ class Field(object):
         new value is kept in the cache and the xblock is marked as
         dirty until `save` is explicitly called.
         """
+        value = self.enforce_type(value)
         # Mark the field as dirty and update the cache:
         self._mark_dirty(xblock, EXPLICITLY_SET)
         self._set_cached_value(xblock, value)
@@ -442,6 +443,14 @@ class Field(object):
         """
         return value
 
+    def enforce_type(self, value):
+        """
+        Coerce the type of the value, if necessary
+
+        Called on field sets to ensure that the stored type is consistent
+        """
+        return value
+
     def read_from(self, xblock):
         """
         Retrieve the value for this field from the specified xblock
@@ -481,8 +490,8 @@ class Integer(Field):
     """
     A field that contains an integer.
 
-    The value, as stored, can be None, '' (which will be treated as None), a
-    Python integer, or a value that will parse as an integer, ie., something
+    The value, as loaded or set, can be None, '' (which will be treated as None),
+    a Python integer, or a value that will parse as an integer, ie., something
     for which int(value) does not throw an error.
 
     Note that a floating point value will convert to an integer, but a string
@@ -496,13 +505,15 @@ class Integer(Field):
             return None
         return int(value)
 
+    enforce_type = from_json
+
 
 class Float(Field):
     """
     A field that contains a float.
 
-    The value, as stored, can be None, '' (which will be treated as None), a
-    Python float, or a value that will parse as an float, ie., something for
+    The value, as loaded or set, can be None, '' (which will be treated as None),
+    a Python float, or a value that will parse as an float, ie., something for
     which float(value) does not throw an error.
 
     """
@@ -513,13 +524,15 @@ class Float(Field):
             return None
         return float(value)
 
+    enforce_type = from_json
+
 
 class Boolean(Field):
     """
     A field class for representing a boolean.
 
-    The stored value can be either a Python bool, a string, or any value that
-    will then be converted to a bool in the from_json method.
+    The value, as loaded or set, can be either a Python bool, a string, or any
+    value that will then be converted to a bool in the from_json method.
 
     Examples:
 
@@ -549,12 +562,14 @@ class Boolean(Field):
         else:
             return bool(value)
 
+    enforce_type = from_json
+
 
 class Dict(Field):
     """
     A field class for representing a Python dict.
 
-    The stored value must be either be None or a dict.
+    The value, as loaded or set, must be either be None or a dict.
 
     """
     _default = {}
@@ -565,12 +580,14 @@ class Dict(Field):
         else:
             raise TypeError('Value stored in a Dict must be None or a dict, found %s' % type(value))
 
+    enforce_type = from_json
+
 
 class List(Field):
     """
     A field class for representing a list.
 
-    The stored value can either be None or a list.
+    The value, as loaded or set, can either be None or a list.
 
     """
     _default = []
@@ -581,12 +598,14 @@ class List(Field):
         else:
             raise TypeError('Value stored in an List must be None or a list, found %s' % type(value))
 
+    enforce_type = from_json
+
 
 class String(Field):
     """
     A field class for representing a string.
 
-    The stored value can either be None or a basestring instance.
+    The value, as loaded or set, can either be None or a basestring instance.
 
     """
     MUTABLE = False
@@ -597,12 +616,14 @@ class String(Field):
         else:
             raise TypeError('Value stored in a String must be None or a string, found %s' % type(value))
 
+    enforce_type = from_json
+
 
 class DateTime(Field):
     """
     A field for representing a datetime.
 
-    The stored value is either a datetime or None.
+    The value, as loaded or set, can either be an ISO-formatted date string or None.
     """
 
     DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
@@ -643,6 +664,12 @@ class DateTime(Field):
         if value is None:
             return None
         raise TypeError("Value stored must be a datetime object, not {}".format(type(value)))
+
+    def enforce_type(self, value):
+        if isinstance(value, datetime.datetime) or value is None:
+            return value
+
+        return self.from_json(value)
 
 
 class Any(Field):
