@@ -460,7 +460,7 @@ class Field(object):
         new value is kept in the cache and the xblock is marked as
         dirty until `save` is explicitly called.
         """
-        value = self._check_or_enforce_type(value)
+        value = self.enforce_type(value)
         # Mark the field as dirty and update the cache:
         self._mark_dirty(xblock, EXPLICITLY_SET)
         self._set_cached_value(xblock, value)
@@ -531,6 +531,14 @@ class Field(object):
         """
         return value
 
+    def enforce_type(self, value):
+        """
+        Coerce the type of the value, if necessary
+
+        Called on field sets to ensure that the stored type is consistent
+        """
+        return value
+
     def read_from(self, xblock):
         """
         Retrieve the value for this field from the specified xblock
@@ -579,9 +587,9 @@ class Integer(JSONField):
     """
     A field that contains an integer.
 
-    The value, as loaded or enforced, can be None, '' (which will be treated as
-    None), a Python integer, or a value that will parse as an integer, ie.,
-    something for which int(value) does not throw an error.
+    The value, as loaded or set, can be None, '' (which will be treated as None),
+    a Python integer, or a value that will parse as an integer, ie., something
+    for which int(value) does not throw an error.
 
     Note that a floating point value will convert to an integer, but a string
     containing a floating point number ('3.48') will throw an error.
@@ -601,9 +609,9 @@ class Float(JSONField):
     """
     A field that contains a float.
 
-    The value, as loaded or enforced, can be None, '' (which will be treated as
-    None), a Python float, or a value that will parse as an float, ie.,
-    something for which float(value) does not throw an error.
+    The value, as loaded or set, can be None, '' (which will be treated as None),
+    a Python float, or a value that will parse as an float, ie., something for
+    which float(value) does not throw an error.
 
     """
     MUTABLE = False
@@ -620,8 +628,8 @@ class Boolean(JSONField):
     """
     A field class for representing a boolean.
 
-    The value, as loaded or enforced, can be either a Python bool, a string, or
-    any value that will then be converted to a bool in the from_json method.
+    The value, as loaded or set, can be either a Python bool, a string, or any
+    value that will then be converted to a bool in the from_json method.
 
     Examples:
 
@@ -659,7 +667,7 @@ class Dict(JSONField):
     """
     A field class for representing a Python dict.
 
-    The value, as loaded or enforced, must be either be None or a dict.
+    The value, as loaded or set, must be either be None or a dict.
 
     """
     _default = {}
@@ -677,7 +685,7 @@ class List(JSONField):
     """
     A field class for representing a list.
 
-    The value, as loaded or enforced, can either be None or a list.
+    The value, as loaded or set, can either be None or a list.
 
     """
     _default = []
@@ -695,7 +703,7 @@ class String(JSONField):
     """
     A field class for representing a string.
 
-    The value, as loaded or enforced, can either be None or a basestring instance.
+    The value, as loaded or set, can either be None or a basestring instance.
 
     """
     MUTABLE = False
@@ -713,8 +721,8 @@ class DateTime(JSONField):
     """
     A field for representing a datetime.
 
-    The value, as loaded or enforced, can either be an ISO-formatted date string, a native datetime,
-    or None.
+    The value, as loaded or set, can either be an ISO-formatted date string or None.
+
     """
 
     DATETIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
