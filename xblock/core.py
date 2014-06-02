@@ -97,6 +97,8 @@ class XBlock(Plugin):
 
     _class_tags = set()
 
+    FIELDS_TO_INIT = tuple()
+
     @classmethod
     def json_handler(cls, func):
         """Wrap a handler to consume and produce JSON.

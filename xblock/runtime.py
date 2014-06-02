@@ -475,12 +475,21 @@ class Runtime(object):
         Construct a new xblock of type cls, mixing in the mixins
         defined for this application.
         """
-        return self.mixologist.mix(cls)(
+        block = self.mixologist.mix(cls)(
             runtime=self,
             field_data=field_data or self.field_data,
             scope_ids=scope_ids,
             *args, **kwargs
         )
+
+        # If a field value is callable, then set it to the return value to initialize it
+        for field in block.FIELDS_TO_INIT:
+            value = getattr(block, field)
+            if hasattr(value, '__call__'):
+                setattr(block, field, value())
+        block.save()
+
+        return block
 
     def get_block(self, usage_id):
         """
