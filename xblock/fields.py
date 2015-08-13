@@ -615,7 +615,7 @@ class Field(Nameable):
         This must not have side effects, since it will be executed to trigger
         a DeprecationWarning even if enforce_type is disabled
         """
-        return self.from_json(value)
+        return value
 
     def read_from(self, xblock):
         """
@@ -699,6 +699,8 @@ class Integer(JSONField):
             return None
         return int(value)
 
+    enforce_type = from_json
+
 
 class Float(JSONField):
     """
@@ -715,6 +717,8 @@ class Float(JSONField):
         if value is None or value == '':
             return None
         return float(value)
+
+    enforce_type = from_json
 
 
 class Boolean(JSONField):
@@ -752,6 +756,8 @@ class Boolean(JSONField):
         else:
             return bool(value)
 
+    enforce_type = from_json
+
 
 class Dict(JSONField):
     """
@@ -771,6 +777,8 @@ class Dict(JSONField):
             raise TypeError('Value stored in a Dict must be None or a dict, found %s' % type(value))
         return value
 
+    enforce_type = from_json
+
 
 class List(JSONField):
     """
@@ -785,10 +793,39 @@ class List(JSONField):
         if value is None or isinstance(value, list):
             return value
         elif isinstance(value, basestring):
-            value = self.coerce_value(value, (list, type(None)))
+            return self.coerce_value(value, (list, type(None)))
         else:
             raise TypeError('Value stored in a List must be None or a list, found %s' % type(value))
-        return value
+
+    enforce_type = from_json
+
+
+class Set(JSONField):
+    """
+    A field class for representing a set.
+
+    The stored value can either be None or a set.
+
+    """
+    _default = set()
+
+    def __init__(self, *args, **kwargs):
+        """
+        Set class constructor.
+
+        Redefined in order to convert default values to sets.
+        """
+        super(Set, self).__init__(*args, **kwargs)
+
+        self._default = set(self._default)
+
+    def from_json(self, value):
+        if value is None or isinstance(value, set):
+            return value
+        else:
+            return set(value)
+
+    enforce_type = from_json
 
 
 class String(JSONField):
@@ -813,6 +850,8 @@ class String(JSONField):
     def to_string(self, value):
         """String gets serialized and deserialized without quote marks."""
         return self.to_json(value)
+
+    enforce_type = from_json
 
 
 class DateTime(JSONField):
@@ -864,6 +903,8 @@ class DateTime(JSONField):
     def to_string(self, value):
         """DateTime fields get serialized without quote marks."""
         return self.to_json(value)
+
+    enforce_type = from_json
 
 
 class Any(JSONField):
