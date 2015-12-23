@@ -679,6 +679,13 @@ class FieldSerializationTest(unittest.TestCase):
 
     @ddt.unpack
     @ddt.data(
+        (DateTime, None, None)
+    )
+    def test_to_string(self, _type, value, string):
+        self.assert_to_string(_type, value, string)
+
+    @ddt.unpack
+    @ddt.data(
         (Integer, 0, '0'),
         (Integer, 5, '5'),
         (Integer, -1023, '-1023'),
@@ -803,6 +810,7 @@ class FieldSerializationTest(unittest.TestCase):
         # old data export tar balls.
         (DateTime, '"2014-04-01T02:03:04.567890"', dt.datetime(2014, 4, 1, 2, 3, 4, 567890).replace(tzinfo=pytz.utc)),
         (DateTime, '"2014-04-01T02:03:04.000000"', dt.datetime(2014, 4, 1, 2, 3, 4).replace(tzinfo=pytz.utc)),
+        (DateTime, '', None),
     )
     def test_from_string(self, _type, string, value):
         self.assert_from_string(_type, string, value)
